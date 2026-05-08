@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>부생일몽 엔딩 도감</title>
+  <meta name="theme-color" content="#1a0a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="엔딩도감">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231a0a2e'/%3E%3Ctext x='50' y='72' text-anchor='middle' font-family='sans-serif' font-size='62' font-weight='900' fill='%23d4a843'%3E夢%3C/text%3E%3C/svg%3E">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <style>
+    [v-cloak] { display: none !important; }
+    * { box-sizing: border-box; }
+    body {
+      background: #0f0720;
+      font-family: 'Noto Sans KR', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 100vh;
+    }
+
+    .hide-scroll::-webkit-scrollbar { display: none; }
+    .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .loader { border: 3px solid rgba(212,168,67,0.2); border-top: 3px solid #d4a843; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-press { transition: transform 0.1s; }
+    .btn-press:active { transform: scale(0.93); }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .fade-up { animation: fadeUp 0.4s ease forwards; }
+
+    /* 고급스러운 카드 스타일 */
+    .ending-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+      border: 1px solid rgba(212,168,67,0.15);
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+    }
+    .ending-card:active { transform: scale(0.98); }
+    .ending-card.completed {
+      background: linear-gradient(135deg, rgba(212,168,67,0.1) 0%, rgba(212,168,67,0.05) 100%);
+      border-color: rgba(212,168,67,0.4);
+    }
+
+    /* 세력별 색상 */
+    .force-juryum { color: #e8a0bf; }
+    .force-jukrim { color: #7dd3b0; }
+    .force-yugeum { color: #d4a843; }
+    .bg-force-juryum { background: rgba(232,160,191,0.15); border-color: rgba(232,160,191,0.3); }
+    .bg-force-jukrim { background: rgba(125,211,176,0.15); border-color: rgba(125,211,176,0.3); }
+    .bg-force-yugeum { background: rgba(212,168,67,0.15); border-color: rgba(212,168,67,0.3); }
+
+    .tab-btn { font-size: 11px; font-weight: 800; padding: 7px 12px; border-radius: 20px; border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; }
+    .tab-on { background: rgba(212,168,67,0.9); color: #1a0a2e; }
+    .tab-off { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.1); }
+
+    /* 별빛 배경 */
+    .star-bg {
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(212,168,67,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(162,89,182,0.08) 0%, transparent 50%),
+        #0f0720;
+    }
+
+    /* 경로 표시 */
+    .path-step {
+      position: relative;
+      padding-left: 20px;
+    }
+    .path-step::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #d4a843;
+    }
+    .path-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 9px;
+      top: calc(50% + 3px);
+      width: 2px;
+      height: calc(100% + 4px);
+      background: rgba(212,168,67,0.3);
+    }
+
+    /* 네비게이션 */
+    .nav-bar {
+      background: rgba(15,7,32,0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(212,168,67,0.15);
+    }
+
+    /* 팝업 */
+    .sheet { border-radius: 24px 24px 0 0; }
+
+    /* 진행률 바 */
+    .progress-bar {
+      background: linear-gradient(90deg, #d4a843, #e8b84b, #c49933);
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .shimmer {
+      background: linear-gradient(90deg, #d4a843 25%, #f0d070 50%, #d4a843 75%);
+      background-size: 200% auto;
+      animation: shimmer 2s linear infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+
+<body class="star-bg">
+<div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative flex flex-col">
+
+  <!-- 네비게이션 바 -->
+  <div class="nav-bar flex-none sticky top-0 z-30 px-4 py-3 flex items-center gap-3">
+    <a href="../oq-album/" class="w-8 h-8 rounded-xl flex items-center justify-center text-amber-400/60 hover:text-amber-400 transition btn-press border border-amber-400/20">
+      <i class="fas fa-layer-group text-xs"></i>
+    </a>
+    <div class="flex-1 text-center">
+      <div class="text-[10px] text-amber-400/60 font-black tracking-widest">OFFICE QUEEN</div>
+      <div class="text-sm font-black text-amber-400">부생일몽 엔딩 도감</div>
+    </div>
+    <button @click="openHelp" class="w-8 h-8 rounded-xl flex items-center justify-center text-amber-400/60 hover:text-amber-400 transition btn-press border border-amber-400/20">
+      <i class="fas fa-question text-xs"></i>
+    </button>
+  </div>
+
+  <!-- 로그인/게스트 선택 화면 -->
+  <div v-if="!started" class="flex-1 flex flex-col items-center justify-center px-6 py-10 fade-up">
+    <div class="text-center mb-10">
+      <div class="text-6xl mb-4">夢</div>
+      <h1 class="text-2xl font-black text-white mb-2">엔딩 도감</h1>
+      <p class="text-sm text-white/40">53개의 엔딩을 모두 발견해보세요</p>
+    </div>
+
+    <!-- 진행 현황 미리보기 -->
+    <div class="w-full bg-white/5 rounded-2xl border border-white/10 p-4 mb-6">
+      <div class="text-xs font-black text-white/40 mb-3 text-center">세력별 엔딩</div>
+      <div class="space-y-2">
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] font-black force-juryum w-20 flex-none">주렴옥궐문</span>
+          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div class="h-full bg-pink-400/60 rounded-full" style="width:100%"></div>
+          </div>
+          <span class="text-[10px] text-white/40 w-8 text-right">8개</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] font-black force-jukrim w-20 flex-none">죽림청풍문</span>
+          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div class="h-full bg-teal-400/60 rounded-full" style="width:100%"></div>
+          </div>
+          <span class="text-[10px] text-white/40 w-8 text-right">21개</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] font-black force-yugeum w-20 flex-none">유금조룡문</span>
+          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div class="h-full bg-amber-400/60 rounded-full" style="width:100%"></div>
+          </div>
+          <span class="text-[10px] text-white/40 w-8 text-right">24개</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full space-y-3">
+      <!-- 닉네임으로 시작 -->
+      <div class="bg-white/5 rounded-2xl border border-amber-400/20 p-4">
+        <div class="text-xs font-black text-amber-400 mb-3">📝 내 기록 저장하기</div>
+        <input v-model="nicknameInput" type="text" placeholder="닉네임 입력 (게임 닉네임)"
+               @keyup.enter="startWithNickname"
+               class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold placeholder-white/20 focus:outline-none focus:border-amber-400/40 mb-2">
+        <button @click="startWithNickname" :disabled="!nicknameInput.trim() || isLoading"
+                class="w-full py-3 bg-amber-500 text-gray-900 rounded-xl font-black text-sm btn-press flex items-center justify-center gap-2 disabled:opacity-40">
+          <div v-if="isLoading" class="loader w-4 h-4 border-2 border-gray-900/20 border-t-gray-900"></div>
+          <span>{{ isLoading ? '불러오는 중...' : '시작하기 →' }}</span>
+        </button>
+        <p class="text-[10px] text-white/30 text-center mt-2">닉네임으로 체크 기록이 저장돼요</p>
+      </div>
+
+      <!-- 구경만 -->
+      <button @click="startAsGuest"
+              class="w-full py-3 rounded-2xl border border-white/10 text-white/50 text-sm font-black btn-press hover:border-white/20 hover:text-white/70 transition">
+        👀 로그인 없이 족보만 보기
+      </button>
+    </div>
+  </div>
+
+  <!-- 메인 화면 -->
+  <div v-else class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- 상단 헤더 -->
+    <div class="flex-none px-4 pt-3 pb-2">
+      <!-- 유저 정보 + 진행률 -->
+      <div class="flex items-center gap-3 mb-3">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span v-if="nickname" class="text-sm font-black text-white">{{ nickname }}</span>
+            <span v-else class="text-sm font-black text-white/40">게스트</span>
+            <span class="text-xs text-amber-400 font-black">{{ completedCount }}/53</span>
+          </div>
+          <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+            <div class="h-full progress-bar rounded-full transition-all duration-500" :style="{width: (completedCount/53*100)+'%'}"></div>
+          </div>
+        </div>
+        <button v-if="nickname" @click="showLogoutConfirm=true"
+                class="text-[10px] text-white/30 border border-white/10 px-2 py-1.5 rounded-lg btn-press">나가기</button>
+      </div>
+
+      <!-- 세력 탭 -->
+      <div class="flex gap-1.5 overflow-x-auto hide-scroll mb-2">
+        <button @click="forceFilter='all'" class="tab-btn flex-none" :class="forceFilter==='all'?'tab-on':'tab-off'">전체 53</button>
+        <button @click="forceFilter='juryum'" class="tab-btn flex-none" :class="forceFilter==='juryum'?'tab-on':'tab-off'">
+          <span class="force-juryum">주렴옥궐문</span> 8
+        </button>
+        <button @click="forceFilter='jukrim'" class="tab-btn flex-none" :class="forceFilter==='jukrim'?'tab-on':'tab-off'">
+          <span class="force-jukrim">죽림청풍문</span> 21
+        </button>
+        <button @click="forceFilter='yugeum'" class="tab-btn flex-none" :class="forceFilter==='yugeum'?'tab-on':'tab-off'">
+          <span class="force-yugeum">유금조룡문</span> 24
+        </button>
+      </div>
+
+      <!-- 완료 필터 -->
+      <div class="flex gap-1.5">
+        <button @click="statusFilter='all'" class="tab-btn flex-none text-xs" :class="statusFilter==='all'?'tab-on':'tab-off'">전체</button>
+        <button @click="statusFilter='incomplete'" class="tab-btn flex-none text-xs" :class="statusFilter==='incomplete'?'tab-on':'tab-off'">❌ 미완료</button>
+        <button @click="statusFilter='complete'" class="tab-btn flex-none text-xs" :class="statusFilter==='complete'?'tab-on':'tab-off'">✅ 완료</button>
+      </div>
+    </div>
+
+    <!-- 엔딩 목록 -->
+    <div class="flex-1 overflow-y-auto hide-scroll px-4 pb-6">
+      <div class="text-[10px] text-white/30 font-black mb-2">{{ filteredEndings.length }}개 표시 중</div>
+      <div class="space-y-2">
+        <div v-for="ending in filteredEndings" :key="ending.name"
+             class="ending-card rounded-2xl p-3.5 cursor-pointer"
+             :class="isCompleted(ending.name) ? 'completed' : ''"
+             @click="openEndingDetail(ending)">
+          <div class="flex items-center gap-3">
+            <!-- 체크박스 -->
+            <div class="w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-none transition-all"
+                 :class="isCompleted(ending.name) ? 'bg-amber-500 border-amber-500' : 'border-white/20'"
+                 @click.stop="nickname ? toggleComplete(ending.name) : showGuestAlert()">
+              <i v-if="isCompleted(ending.name)" class="fas fa-check text-gray-900 text-[10px]"></i>
+            </div>
+            <!-- 엔딩 정보 -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="text-sm font-black"
+                      :class="isCompleted(ending.name) ? 'text-amber-400' : 'text-white'">{{ ending.name }}</span>
+                <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full"
+                      :class="ending.force === 'juryum' ? 'bg-pink-400/20 text-pink-300' : ending.force === 'jukrim' ? 'bg-teal-400/20 text-teal-300' : 'bg-amber-400/20 text-amber-300'">
+                  {{ ending.forceShort }}
+                </span>
+              </div>
+              <div class="text-[10px] text-white/30 truncate">{{ ending.pathShort }}</div>
+            </div>
+            <!-- 화살표 -->
+            <i class="fas fa-chevron-right text-white/20 text-xs flex-none"></i>
+          </div>
+        </div>
+        <div v-if="filteredEndings.length === 0" class="text-center text-white/30 py-10 text-sm">
+          해당하는 엔딩이 없어요
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 엔딩 상세 팝업 -->
+  <div v-if="selectedEnding" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end justify-center z-50" @click.self="selectedEnding=null">
+    <div class="bg-[#1a0a2e] sheet w-full max-w-md p-5 shadow-2xl border-t border-amber-400/20 max-h-[80vh] overflow-y-auto hide-scroll">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <div class="text-[10px] font-black mb-1"
+               :class="selectedEnding.force === 'juryum' ? 'text-pink-400' : selectedEnding.force === 'jukrim' ? 'text-teal-400' : 'text-amber-400'">
+            {{ selectedEnding.forceName }}
+          </div>
+          <h3 class="text-xl font-black text-white">{{ selectedEnding.name }}</h3>
+        </div>
+        <button @click="selectedEnding=null" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 btn-press flex-none">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- 분기 경로 -->
+      <div class="bg-white/5 rounded-2xl p-4 mb-4 border border-white/10">
+        <div class="text-xs font-black text-white/50 mb-3">📍 분기 경로</div>
+        <div class="space-y-2">
+          <div v-for="(step, i) in selectedEnding.pathSteps" :key="i" class="path-step py-1">
+            <span class="text-sm font-black"
+                  :class="i === selectedEnding.pathSteps.length-1 ? 'text-amber-400' : 'text-white/70'">
+              {{ step }}
+            </span>
+            <span v-if="i === selectedEnding.pathSteps.length-1" class="text-amber-400 ml-1">→ {{ selectedEnding.name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 완료 버튼 -->
+      <button v-if="nickname" @click="toggleComplete(selectedEnding.name)"
+              class="w-full py-3.5 rounded-2xl font-black text-sm btn-press transition-all"
+              :class="isCompleted(selectedEnding.name)
+                ? 'bg-white/10 text-white/50 border border-white/10'
+                : 'bg-amber-500 text-gray-900'">
+        {{ isCompleted(selectedEnding.name) ? '✅ 완료됨 (취소하려면 탭)' : '🎬 이 엔딩 봤어요!' }}
+      </button>
+      <div v-else class="w-full py-3 text-center text-white/30 text-xs">
+        체크 저장하려면 닉네임으로 로그인하세요
+      </div>
+    </div>
+  </div>
+
+  <!-- 게스트 알림 -->
+  <div v-if="showGuestAlertMsg" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6" @click="showGuestAlertMsg=false">
+    <div class="bg-[#1a0a2e] rounded-2xl p-6 border border-amber-400/20 w-full max-w-sm text-center">
+      <div class="text-3xl mb-3">📝</div>
+      <p class="text-white font-black mb-1">닉네임이 필요해요!</p>
+      <p class="text-white/40 text-sm mb-4">체크 저장은 닉네임으로 시작해야 해요</p>
+      <button @click="showGuestAlertMsg=false; started=false" class="w-full py-3 bg-amber-500 text-gray-900 rounded-xl font-black text-sm btn-press">닉네임으로 시작하기</button>
+      <button @click="showGuestAlertMsg=false" class="w-full py-2 text-white/30 text-xs mt-1 btn-press">그냥 볼게요</button>
+    </div>
+  </div>
+
+  <!-- 로그아웃 확인 -->
+  <div v-if="showLogoutConfirm" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6" @click.self="showLogoutConfirm=false">
+    <div class="bg-[#1a0a2e] rounded-2xl p-6 border border-white/10 w-full max-w-sm text-center">
+      <p class="text-white font-black mb-1">나가기</p>
+      <p class="text-white/40 text-sm mb-4">체크 기록은 저장돼 있어요. 다음에 같은 닉네임으로 들어오면 돼요!</p>
+      <div class="flex gap-2">
+        <button @click="showLogoutConfirm=false" class="flex-1 py-3 bg-white/10 text-white rounded-xl font-black text-sm btn-press">취소</button>
+        <button @click="logout" class="flex-1 py-3 bg-amber-500 text-gray-900 rounded-xl font-black text-sm btn-press">나가기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 도움말 -->
+  <div v-if="showHelp" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6" @click.self="showHelp=false">
+    <div class="bg-[#1a0a2e] rounded-2xl p-6 border border-amber-400/20 w-full max-w-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-black text-white">사용 가이드</h3>
+        <button @click="showHelp=false" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 btn-press"><i class="fas fa-times text-sm"></i></button>
+      </div>
+      <div class="space-y-3 text-sm text-white/60">
+        <div class="flex items-start gap-2"><span class="text-amber-400 flex-none">•</span><p>닉네임 없이도 <b class="text-white">족보(분기경로)</b>는 볼 수 있어요</p></div>
+        <div class="flex items-start gap-2"><span class="text-amber-400 flex-none">•</span><p>내가 본 엔딩을 저장하려면 <b class="text-white">닉네임으로 시작</b>하세요</p></div>
+        <div class="flex items-start gap-2"><span class="text-amber-400 flex-none">•</span><p>엔딩 카드를 탭하면 <b class="text-white">분기 경로</b>를 볼 수 있어요</p></div>
+        <div class="flex items-start gap-2"><span class="text-amber-400 flex-none">•</span><p>체크박스를 탭하면 바로 완료 표시할 수 있어요</p></div>
+        <div class="flex items-start gap-2"><span class="text-amber-400 flex-none">•</span><p>다음에 같은 닉네임으로 들어오면 기록이 유지돼요</p></div>
+      </div>
+      <button @click="showHelp=false" class="w-full mt-4 py-3 bg-amber-500 text-gray-900 rounded-xl font-black text-sm btn-press">확인</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCFV593GWa2VoOf4IqMhVmbW2BGQqkDsE4",
+  authDomain: "office-queen-album.firebaseapp.com",
+  projectId: "office-queen-album",
+  storageBucket: "office-queen-album.firebasestorage.app",
+  messagingSenderId: "936201723618",
+  appId: "1:936201723618:web:e4ec53040d668f023988bb"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const { createApp, ref, computed, onMounted } = Vue;
+
+// ===== 엔딩 데이터 =====
+const ENDINGS_DATA = [
+  // 주렴옥궐문
+  { name: "모의천하", force: "juryum", forceName: "주렴옥궐문", forceShort: "주렴",
+    path: "주렴옥궐문 - 황후가 되려고 노력하기 - 승진을 위해 치밀한 계획을 짜기 - 자비심을 베풀기" },
+  { name: "출가의 삶", force: "juryum", forceName: "주렴옥궐문", forceShort: "주렴",
+    path: "주렴옥궐문 - 황후가 되려고 노력하기 - 승진을 위해 치밀한 계획을 짜기 - 몰래 제압하기" },
+  { name: "비단과 독주", force: "juryum", forceName: "주렴옥궐문", forceShort: "주렴",
+    path: "주렴옥궐문 - 황후가 되려고 노력하기 - 승진을 위해 치밀한 계획을 짜기 - 질투하기" },
+  { name: "깊은 원한", force: "juryum", forceName: "주렴옥궐문", forceShort: "주렴",
+    path: "주렴옥궐문 - 황후가 되려고 노력하기 - 충애를 믿고 건방지게 행동하기" },
+  { name: "화려한 삶", force: "juryum", forceName: "주렴옥궐문", forceShort: "주렴",
+    path: "주렴옥궐문 - 황제의 사랑을 받으려고 애쓰기 - 차질이 없도록 단단히 단속하기" },
+  { name: "외척은 안 돼", force: "juryum", forceName: "주렴옥궐문", forceShort: "주렴",
+    path: "주렴옥궐문 - 황제의 사랑을 받으려고 애쓰기 - 그릇된 행동을 방임하고 부를 함께 누리기" },
+  { name: "육궁 관리", force: "juryum", forceName: "주렴옥궐문", forceShort: "주렴",
+    path: "주렴옥궐문 - 권력을 손에 쥐려고 애쓰기 - 틈을 노려 과실을 들춰내기" },
+  { name: "잃은 총애", force: "juryum", forceName: "주렴옥궐문", forceShort: "주렴",
+    path: "주렴옥궐문 - 권력을 손에 쥐려고 애쓰기 - 가만히 있다 기회를 노려 행동하기" },
+
+  // 죽림청풍문
+  { name: "여사", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 한림원 - 대대적으로 개혁하기 - 반격 - 사실 그대로 기록해 공평을 지키기" },
+  { name: "풍자의 고수", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 한림원 - 대대적으로 개혁하기 - 반격 - 함축적으로 표현하기" },
+  { name: "화려한 궁궐", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 한림원 - 대대적으로 개혁하기 - 일 바꾸기 - 어명은 어길 수 없어 타협하기" },
+  { name: "올바른 선택", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 한림원 - 대대적으로 개혁하기 - 일 바꾸기 - 굽히지 않고 죽음까지 싸우기" },
+  { name: "강호의 길", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 한림원 - 대대적으로 개혁하기 - 벼슬에서 물러나기 - 의리를 지키고 출사하지 않기" },
+  { name: "전원생활", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 한림원 - 대대적으로 개혁하기 - 벼슬에서 물러나기 - 대의를 위해 속세의 집착을 놓기" },
+  { name: "독점은 안 돼", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 한림원 - 이름만 바꾸고 내용은 그대로" },
+  { name: "어디 감히", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 한림원 - 참여하지 않기" },
+  { name: "언론 금지", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 상서성 - 강경하게 추진하기 - 거절 - 황제의 비위에 맞추기 - 신념을 고수하기" },
+  { name: "웃음거리", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 상서성 - 강경하게 추진하기 - 거절 - 황제의 비위에 맞추기 - 목숨이 가장 중요" },
+  { name: "비극적 죽음", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 상서성 - 강경하게 추진하기 - 거절 - 어진 자를 선택하기 - 당당하게 말하기" },
+  { name: "잊혀짐", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 상서성 - 강경하게 추진하기 - 거절 - 어진 자를 선택하기 - 죽음을 맞이하기" },
+  { name: "덧없는 인생", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 상서성 - 강경하게 추진하기 - 받아들이기" },
+  { name: "담판 고수", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 상서성 - 부드럽게 추진하기" },
+  { name: "역사 심판자", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 상서성 - 궁을 떠나기" },
+  { name: "의자인심", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 태의원 - 겸손히 배우기 - 벼슬을 버리고 역병을 막기 - 황제를 구하러 가기" },
+  { name: "약 시험", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 태의원 - 겸손히 배우기 - 벼슬을 버리고 역병을 막기 - 초심을 고수하고 어명을 어기기" },
+  { name: "모르다", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 태의원 - 겸손히 배우기 - 명을 따르기" },
+  { name: "지식의 바다", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 과거 시험에 나가기 - 태의원 - 고적을 연구하기" },
+  { name: "글의 힘", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 책을 내기" },
+  { name: "제자 부자", force: "jukrim", forceName: "죽림청풍문", forceShort: "죽림",
+    path: "죽림청풍문 - 사숙을 세우기" },
+
+  // 유금조룡문
+  { name: "다시한번", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 승진을 노리기 - 흐름에 따르기 - 황제를 지지하기 - 항복" },
+  { name: "아쉬워요", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 승진을 노리기 - 흐름에 따르기 - 황제를 지지하기 - 최후의 발악" },
+  { name: "여제강림", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 승진을 노리기 - 흐름에 따르기 - 유연하게 처신하기" },
+  { name: "여주천하", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 승진을 노리기 - 흐름에 따르기 - 태후에게 의지" },
+  { name: "고양이선녀", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 승진을 노리기 - 면종복배 - 단식" },
+  { name: "외로운성", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 승진을 노리기 - 면종복배 - 생명 보전" },
+  { name: "국사무쌍", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 황후를 돕기 - 사양하고 과거 시험에 나가기 - 강한 반격" },
+  { name: "여자를무시한대가", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 황후를 돕기 - 사양하고 과거 시험에 나가기 - 이퇴위진" },
+  { name: "배신자의끝", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 황후를 돕기 - 사양하고 과거 시험에 나가기 - 에둘러 모면하기 - 가문은 가문이고 나는 나야" },
+  { name: "천고의죄인", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 황후를 돕기 - 사양하고 과거 시험에 나가기 - 에둘러 모면하기 - 가문에 연루하지 않게 하기" },
+  { name: "배후인물", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 황후를 돕기 - 사양하고 황제 직속 기구 - 수단을 가리지 않기" },
+  { name: "황금산", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 황후를 돕기 - 사양하고 황제 직속 기구 - 분명하게 행동" },
+  { name: "구천현녀", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 황후를 돕기 - 흔쾌한 수락" },
+  { name: "농신의환생", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 죽은 척 궁 탈출하기 - 장사하기 - 농기구 개량" },
+  { name: "샹나이여황", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 죽은 척 궁 탈출하기 - 장사하기 - 스킨케어 공방" },
+  { name: "부갑천하", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 죽은 척 궁 탈출하기 - 장사하기 - 실크로드 - 협상을 통해 이익 지키기" },
+  { name: "돈은다시벌면돼", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 죽은 척 궁 탈출하기 - 장사하기 - 실크로드 - 순응하며 탈출하기" },
+  { name: "만화여신", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 죽은 척 궁 탈출하기 - 취미 찾기 - 연재 만화" },
+  { name: "예리한언변", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 죽은 척 궁 탈출하기 - 취미 찾기 - 찻집 토크쇼" },
+  { name: "비밀은모두알아야지", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 모른 척 침묵을 지키기 - 비밀을 폭로하기" },
+  { name: "해외이주", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 궁녀선발 - 참고 기다리기 - 모른 척 침묵을 지키기 - 비밀을 지키기" },
+  { name: "머리숱많네", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 대군에게 시집가기 - 모발 성장 샴푸 개발하기" },
+  { name: "매운맛대군", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 가문에 의지하기 - 대군에게 시집가기 - 생강물로 머리 감기" },
+  { name: "도보달인", force: "yugeum", forceName: "유금조룡문", forceShort: "유금",
+    path: "유금조룡문 - 황제에게 의지하기" },
+];
+
+// pathShort, pathSteps 추가
+ENDINGS_DATA.forEach(e => {
+  const steps = e.path.split(' - ');
+  e.pathSteps = steps;
+  e.pathShort = steps.slice(1, 3).join(' → ');
+});
+
+createApp({
+  setup() {
+    const started = ref(false);
+    const nickname = ref('');
+    const nicknameInput = ref('');
+    const isLoading = ref(false);
+    const completedSet = ref(new Set());
+    const forceFilter = ref('all');
+    const statusFilter = ref('all');
+    const selectedEnding = ref(null);
+    const showGuestAlertMsg = ref(false);
+    const showLogoutConfirm = ref(false);
+    const showHelp = ref(false);
+
+    const completedCount = computed(() => completedSet.value.size);
+
+    const filteredEndings = computed(() => {
+      let list = [...ENDINGS_DATA];
+      if (forceFilter.value !== 'all') list = list.filter(e => e.force === forceFilter.value);
+      if (statusFilter.value === 'complete') list = list.filter(e => completedSet.value.has(e.name));
+      if (statusFilter.value === 'incomplete') list = list.filter(e => !completedSet.value.has(e.name));
+      return list;
+    });
+
+    const isCompleted = (name) => completedSet.value.has(name);
+
+    const getDocId = (nick) => `ending_${nick}`;
+
+    const loadProgress = async (nick) => {
+      try {
+        const doc = await db.collection('endingProgress').doc(getDocId(nick)).get();
+        if (doc.exists) {
+          const data = doc.data();
+          completedSet.value = new Set(data.completed || []);
+        }
+      } catch(e) { console.error(e); }
+    };
+
+    const saveProgress = async () => {
+      if (!nickname.value) return;
+      try {
+        await db.collection('endingProgress').doc(getDocId(nickname.value)).set({
+          nickname: nickname.value,
+          completed: [...completedSet.value],
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch(e) { console.error(e); }
+    };
+
+    const toggleComplete = async (name) => {
+      if (!nickname.value) { showGuestAlertMsg.value = true; return; }
+      const s = new Set(completedSet.value);
+      if (s.has(name)) s.delete(name); else s.add(name);
+      completedSet.value = s;
+      await saveProgress();
+    };
+
+    const startWithNickname = async () => {
+      const nick = nicknameInput.value.trim();
+      if (!nick) return;
+      isLoading.value = true;
+      try {
+        nickname.value = nick;
+        await loadProgress(nick);
+        started.value = true;
+        localStorage.setItem('oq_ending_nick', nick);
+      } catch(e) { alert('오류: ' + (e.message||e)); } finally { isLoading.value = false; }
+    };
+
+    const startAsGuest = () => {
+      nickname.value = '';
+      started.value = true;
+    };
+
+    const logout = () => {
+      started.value = false;
+      nickname.value = '';
+      nicknameInput.value = '';
+      completedSet.value = new Set();
+      showLogoutConfirm.value = false;
+      localStorage.removeItem('oq_ending_nick');
+    };
+
+    const openEndingDetail = (ending) => {
+      selectedEnding.value = ending;
+    };
+
+    const showGuestAlert = () => { showGuestAlertMsg.value = true; };
+    const openHelp = () => { showHelp.value = true; };
+
+    // 자동 로그인
+    const checkAutoLogin = async () => {
+      const saved = localStorage.getItem('oq_ending_nick');
+      if (saved) {
+        nicknameInput.value = saved;
+        await startWithNickname();
+      }
+    };
+
+    const { onMounted } = Vue;
+    onMounted(() => { checkAutoLogin(); });
+
+    return {
+      started, nickname, nicknameInput, isLoading,
+      completedCount, forceFilter, statusFilter, filteredEndings,
+      selectedEnding, showGuestAlertMsg, showLogoutConfirm, showHelp,
+      isCompleted, toggleComplete, startWithNickname, startAsGuest, logout,
+      openEndingDetail, showGuestAlert, openHelp
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
