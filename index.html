@@ -34,7 +34,7 @@
   <!-- 로그인 -->
   <div v-if="!started" class="flex-1 flex flex-col px-6 py-8">
     <div class="flex items-center justify-between mb-10">
-      <a href="../oq-album/" class="group relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200 btn" title="스티커 교환소">
+      <a href="https://oqsiso.github.io/oq-album/" target="_blank" rel="noopener" class="group relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200 btn" title="스티커 교환소">
         <i class="fas fa-layer-group text-sm"></i>
         <span class="pointer-events-none absolute left-11 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-[10px] font-black px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 hidden md:block z-50">스티커교환소로 이동</span>
       </a>
@@ -46,24 +46,10 @@
       <h1 class="text-2xl font-black text-gray-900 mb-1">부생일몽 엔딩 도감</h1>
       <p class="text-sm text-gray-400">총 53개 엔딩을 모두 발견해보세요</p>
     </div>
-    <div class="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100 space-y-2">
-      <div class="flex items-center gap-3">
-        <span class="text-xs font-black text-gray-600 w-20">유금조룡문</span>
-        <div class="flex-1 h-1.5 bg-gray-200 rounded-full"><div class="h-full bg-blue-500 rounded-full" style="width:45%"></div></div>
-        <span class="text-[10px] text-gray-400">24개</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="text-xs font-black text-gray-600 w-20">죽림청풍문</span>
-        <div class="flex-1 h-1.5 bg-gray-200 rounded-full"><div class="h-full bg-blue-400 rounded-full" style="width:40%"></div></div>
-        <span class="text-[10px] text-gray-400">21개</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="text-xs font-black text-gray-600 w-20">주렴옥궐문</span>
-        <div class="flex-1 h-1.5 bg-gray-200 rounded-full"><div class="h-full bg-blue-300 rounded-full" style="width:15%"></div></div>
-        <span class="text-[10px] text-gray-400">8개</span>
-      </div>
-    </div>
-    <div class="bg-white rounded-2xl border border-blue-100 p-4 shadow-sm mb-3">
+    <button @click="doGuest" class="w-full py-3 rounded-2xl border border-blue-200 text-blue-700 text-sm font-black btn mb-3">
+      👀 로그인 없이 족보만 보기
+    </button>
+    <div class="bg-white rounded-2xl border border-blue-100 p-4 shadow-sm">
       <div class="text-xs font-black text-blue-700 mb-3">📝 내 기록 저장하기</div>
       <input v-model="nick" type="text" placeholder="닉네임 입력 (게임 닉네임)"
              @keyup.enter="doLogin"
@@ -75,16 +61,13 @@
       </button>
       <p class="text-[10px] text-gray-400 text-center mt-2">닉네임으로 체크 기록이 저장돼요</p>
     </div>
-    <button @click="doGuest" class="w-full py-3 rounded-2xl border border-gray-200 text-gray-400 text-sm font-black btn">
-      👀 로그인 없이 족보만 보기
-    </button>
   </div>
 
   <!-- 메인 -->
   <div v-else class="flex-1 flex flex-col overflow-hidden">
     <div class="flex-none bg-white border-b border-gray-100 px-4 pt-3 pb-2 sticky top-0 z-20">
       <div class="flex items-center gap-2 mb-2">
-        <a href="../oq-album/" class="group relative w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200 btn flex-none">
+        <a href="https://oqsiso.github.io/oq-album/" target="_blank" rel="noopener" class="group relative w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200 btn flex-none">
           <i class="fas fa-layer-group text-xs"></i>
           <span class="pointer-events-none absolute left-10 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-[10px] font-black px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 hidden md:block z-50">스티커교환소로 이동</span>
         </a>
