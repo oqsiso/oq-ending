@@ -272,7 +272,7 @@ createApp({
     const loading = ref(false);
     const chars   = ref([]);      // [{docId, nickname, server}]
     const activeIdx = ref(0);
-    const doneMap = ref({});      // { nickname: Set }
+    const doneMap = ref({});      // { docId: Set }  ← docId 기준으로 분리
     const tab     = ref('all');
     const sel     = ref(null);
     const confirmLogout = ref(false);
@@ -295,8 +295,8 @@ createApp({
     const activeChar  = computed(() => chars.value[activeIdx.value] || null);
     const loggedNick  = computed(() => activeChar.value?.nickname || '');
     const done        = computed(() => {
-      const n = loggedNick.value;
-      return n ? (doneMap.value[n] || new Set()) : new Set();
+      const id = activeChar.value?.docId;
+      return id ? (doneMap.value[id] || new Set()) : new Set();
     });
     const doneCount   = computed(() => done.value.size);
     const list        = computed(() => {
@@ -306,32 +306,32 @@ createApp({
     });
 
     // ── Firebase 읽기/쓰기 ──
-    const load = async (nickname) => {
+    const load = async (docId, nickname) => {
       try {
-        const d = await db.collection('endingProgress').doc('nick_' + nickname).get();
+        const d = await db.collection('endingProgress').doc(docId).get();
         const s = d.exists ? new Set(d.data().completed || []) : new Set();
-        doneMap.value = { ...doneMap.value, [nickname]: s };
+        doneMap.value = { ...doneMap.value, [docId]: s };
       } catch(e) {}
     };
 
     const save = async () => {
-      const n = loggedNick.value;
-      if (!n) return;
+      const c = activeChar.value;
+      if (!c) return;
       try {
-        await db.collection('endingProgress').doc('nick_' + n).set({
-          nickname: n,
-          completed: [...(doneMap.value[n] || new Set())],
+        await db.collection('endingProgress').doc(c.docId).set({
+          nickname: c.nickname,
+          completed: [...(doneMap.value[c.docId] || new Set())],
           updatedAt: FieldValue.serverTimestamp()
         });
       } catch(e) {}
     };
 
     const toggle = async (name) => {
-      const n = loggedNick.value;
-      if (!n) return;
-      const s = new Set(doneMap.value[n] || []);
+      const c = activeChar.value;
+      if (!c) return;
+      const s = new Set(doneMap.value[c.docId] || []);
       if (s.has(name)) s.delete(name); else s.add(name);
-      doneMap.value = { ...doneMap.value, [n]: s };
+      doneMap.value = { ...doneMap.value, [c.docId]: s };
       await save();
     };
 
@@ -339,8 +339,8 @@ createApp({
     const switchChar = async (idx) => {
       activeIdx.value = idx;
       const c = chars.value[idx];
-      if (c && doneMap.value[c.nickname] === undefined) {
-        await load(c.nickname);
+      if (c && doneMap.value[c.docId] === undefined) {
+        await load(c.docId, c.nickname);
       }
     };
 
@@ -369,7 +369,7 @@ createApp({
         chars.value    = charList;
         activeIdx.value = 0;
         // 전체 캐릭터 진행도 병렬 로드
-        await Promise.all(charList.map(c => load(c.nickname)));
+        await Promise.all(charList.map(c => load(c.docId, c.nickname)));
         started.value = true;
       } catch(e) {
         alert('오류: ' + (e.message || e));
@@ -386,7 +386,7 @@ createApp({
       try {
         chars.value     = [{ docId: 'nick_' + n, nickname: n, server: null }];
         activeIdx.value = 0;
-        await load(n);
+        await load('nick_' + n, n);
         started.value   = true;
         localStorage.setItem('oq_ending_nick', n);
       } catch(e) {
