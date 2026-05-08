@@ -21,7 +21,7 @@
     [v-cloak] { display: none !important; }
     * { box-sizing: border-box; }
     body {
-      background: #0f0720;
+      background: #f8f9fa;
       font-family: 'Noto Sans KR', sans-serif;
       -webkit-tap-highlight-color: transparent;
       min-height: 100vh;
@@ -41,15 +41,14 @@
 
     /* 고급스러운 카드 스타일 */
     .ending-card {
-      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-      border: 1px solid rgba(212,168,67,0.15);
-      backdrop-filter: blur(10px);
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
       transition: all 0.2s;
     }
     .ending-card:active { transform: scale(0.98); }
     .ending-card.completed {
-      background: linear-gradient(135deg, rgba(212,168,67,0.1) 0%, rgba(212,168,67,0.05) 100%);
-      border-color: rgba(212,168,67,0.4);
+      background: #fef9ee;
+      border-color: #d4a843;
     }
 
     /* 세력별 색상 */
@@ -62,15 +61,9 @@
 
     .tab-btn { font-size: 11px; font-weight: 800; padding: 7px 12px; border-radius: 20px; border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; }
     .tab-on { background: rgba(212,168,67,0.9); color: #1a0a2e; }
-    .tab-off { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.1); }
+    .tab-off { background: #f1f5f9; color: #64748b; border-color: transparent; }
 
-    /* 별빛 배경 */
-    .star-bg {
-      background:
-        radial-gradient(ellipse at 20% 20%, rgba(212,168,67,0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(162,89,182,0.08) 0%, transparent 50%),
-        #0f0720;
-    }
+
 
     /* 경로 표시 */
     .path-step {
@@ -100,9 +93,9 @@
 
     /* 네비게이션 */
     .nav-bar {
-      background: rgba(15,7,32,0.95);
+      background: rgba(255,255,255,0.97);
       backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(212,168,67,0.15);
+      border-bottom: 1px solid #e5e7eb;
     }
 
     /* 팝업 */
@@ -128,24 +121,24 @@
   </style>
 </head>
 
-<body class="star-bg">
-<div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative flex flex-col">
+<body class="bg-gray-50">
+<div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative flex flex-col bg-white">
 
   <!-- 네비게이션 바 -->
   <div class="nav-bar flex-none sticky top-0 z-30 px-4 py-3 flex items-center gap-3">
     <div class="relative group">
-      <a href="../oq-album/" class="w-8 h-8 rounded-xl flex items-center justify-center text-amber-400/60 hover:text-amber-400 transition btn-press border border-amber-400/20">
+      <a href="../oq-album/" class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 transition btn-press border border-gray-200">
         <i class="fas fa-layer-group text-xs"></i>
       </a>
       <!-- 툴팁 -->
-      <div class="absolute left-0 top-10 bg-gray-900 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-amber-400/20 z-50">
+      <div class="absolute left-0 top-10 bg-gray-800 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-amber-400/20 z-50">
         🎴 스티커 교환소로 이동
         <div class="absolute -top-1 left-3 w-2 h-2 bg-gray-900 border-l border-t border-amber-400/20 rotate-45"></div>
       </div>
     </div>
     <div class="flex-1 text-center">
-      <div class="text-[10px] text-amber-400/60 font-black tracking-widest">OFFICE QUEEN</div>
-      <div class="text-sm font-black text-amber-400">부생일몽 엔딩 도감</div>
+      <div class="text-[10px] text-gray-400 font-black tracking-widest">OFFICE QUEEN</div>
+      <div class="text-sm font-black text-gray-800">부생일몽 엔딩 도감</div>
     </div>
     <div class="flex items-center gap-1.5">
       <!-- 게스트일 때 로그인 유도 -->
@@ -153,7 +146,7 @@
               class="text-[10px] font-black text-amber-400 border border-amber-400/30 px-2.5 py-1.5 rounded-lg btn-press hover:bg-amber-400/10 transition">
         📝 기록저장
       </button>
-      <button @click="openHelp" class="w-8 h-8 rounded-xl flex items-center justify-center text-amber-400/60 hover:text-amber-400 transition btn-press border border-amber-400/20">
+      <button @click="openHelp" class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 transition btn-press border border-gray-200">
         <i class="fas fa-question text-xs"></i>
       </button>
     </div>
@@ -163,34 +156,34 @@
   <div v-if="!started" class="flex-1 flex flex-col items-center justify-center px-6 py-10 fade-up">
     <div class="text-center mb-10">
       <div class="text-6xl mb-4">夢</div>
-      <h1 class="text-2xl font-black text-white mb-2">엔딩 도감</h1>
-      <p class="text-sm text-white/40">53개의 엔딩을 모두 발견해보세요</p>
+      <h1 class="text-2xl font-black text-gray-900 mb-2">엔딩 도감</h1>
+      <p class="text-sm text-gray-400">53개의 엔딩을 모두 발견해보세요</p>
     </div>
 
     <!-- 진행 현황 미리보기 -->
-    <div class="w-full bg-white/5 rounded-2xl border border-white/10 p-4 mb-6">
-      <div class="text-xs font-black text-white/40 mb-3 text-center">세력별 엔딩</div>
+    <div class="w-full bg-gray-50 rounded-2xl border border-gray-200 p-4 mb-6">
+      <div class="text-xs font-black text-gray-400 mb-3 text-center">세력별 엔딩</div>
       <div class="space-y-2">
         <div class="flex items-center gap-3">
           <span class="text-[11px] font-black force-juryum w-20 flex-none">주렴옥궐문</span>
           <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div class="h-full bg-pink-400/60 rounded-full" style="width:100%"></div>
           </div>
-          <span class="text-[10px] text-white/40 w-8 text-right">8개</span>
+          <span class="text-[10px] text-gray-400 w-8 text-right">8개</span>
         </div>
         <div class="flex items-center gap-3">
           <span class="text-[11px] font-black force-jukrim w-20 flex-none">죽림청풍문</span>
           <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div class="h-full bg-teal-400/60 rounded-full" style="width:100%"></div>
           </div>
-          <span class="text-[10px] text-white/40 w-8 text-right">21개</span>
+          <span class="text-[10px] text-gray-400 w-8 text-right">21개</span>
         </div>
         <div class="flex items-center gap-3">
           <span class="text-[11px] font-black force-yugeum w-20 flex-none">유금조룡문</span>
           <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div class="h-full bg-amber-400/60 rounded-full" style="width:100%"></div>
           </div>
-          <span class="text-[10px] text-white/40 w-8 text-right">24개</span>
+          <span class="text-[10px] text-gray-400 w-8 text-right">24개</span>
         </div>
       </div>
     </div>
@@ -198,21 +191,21 @@
     <div class="w-full space-y-3">
       <!-- 닉네임으로 시작 -->
       <div class="bg-white/5 rounded-2xl border border-amber-400/20 p-4">
-        <div class="text-xs font-black text-amber-400 mb-3">📝 내 기록 저장하기</div>
+        <div class="text-xs font-black text-amber-600 mb-3">📝 내 기록 저장하기</div>
         <input v-model="nicknameInput" type="text" placeholder="닉네임 입력 (게임 닉네임)"
                @keyup.enter="startWithNickname"
-               class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold placeholder-white/20 focus:outline-none focus:border-amber-400/40 mb-2">
+               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 text-sm font-bold placeholder-gray-300 focus:outline-none focus:border-amber-400 mb-2">
         <button @click="startWithNickname" :disabled="!nicknameInput.trim() || isLoading"
                 class="w-full py-3 bg-amber-500 text-gray-900 rounded-xl font-black text-sm btn-press flex items-center justify-center gap-2 disabled:opacity-40">
           <div v-if="isLoading" class="loader w-4 h-4 border-2 border-gray-900/20 border-t-gray-900"></div>
           <span>{{ isLoading ? '불러오는 중...' : '시작하기 →' }}</span>
         </button>
-        <p class="text-[10px] text-white/30 text-center mt-2">닉네임으로 체크 기록이 저장돼요</p>
+        <p class="text-[10px] text-gray-400 text-center mt-2">닉네임으로 체크 기록이 저장돼요</p>
       </div>
 
       <!-- 구경만 -->
       <button @click="startAsGuest"
-              class="w-full py-3 rounded-2xl border border-white/10 text-white/50 text-sm font-black btn-press hover:border-white/20 hover:text-white/70 transition">
+              class="w-full py-3 rounded-2xl border border-gray-200 text-gray-400 text-sm font-black btn-press hover:border-gray-300 hover:text-gray-600 transition">
         👀 로그인 없이 족보만 보기
       </button>
     </div>
@@ -227,8 +220,8 @@
       <div class="flex items-center gap-3 mb-3">
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-1">
-            <span v-if="nickname" class="text-sm font-black text-white">{{ nickname }}</span>
-            <span v-else class="text-sm font-black text-white/40">게스트</span>
+            <span v-if="nickname" class="text-sm font-black text-gray-800">{{ nickname }}</span>
+            <span v-else class="text-sm font-black text-gray-400">게스트</span>
             <span class="text-xs text-amber-400 font-black">{{ completedCount }}/53</span>
           </div>
           <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -236,34 +229,20 @@
           </div>
         </div>
         <button v-if="nickname" @click="showLogoutConfirm=true"
-                class="text-[10px] text-white/30 border border-white/10 px-2 py-1.5 rounded-lg btn-press">나가기</button>
+                class="text-[10px] text-gray-400 border border-gray-200 px-2 py-1.5 rounded-lg btn-press">나가기</button>
       </div>
 
-      <!-- 세력 탭 -->
-      <div class="flex gap-1.5 overflow-x-auto hide-scroll mb-2">
-        <button @click="forceFilter='all'" class="tab-btn flex-none" :class="forceFilter==='all'?'tab-on':'tab-off'">전체 53</button>
-        <button @click="forceFilter='juryum'" class="tab-btn flex-none" :class="forceFilter==='juryum'?'tab-on':'tab-off'">
-          <span class="force-juryum">주렴옥궐문</span> 8
-        </button>
-        <button @click="forceFilter='jukrim'" class="tab-btn flex-none" :class="forceFilter==='jukrim'?'tab-on':'tab-off'">
-          <span class="force-jukrim">죽림청풍문</span> 21
-        </button>
-        <button @click="forceFilter='yugeum'" class="tab-btn flex-none" :class="forceFilter==='yugeum'?'tab-on':'tab-off'">
-          <span class="force-yugeum">유금조룡문</span> 24
-        </button>
-      </div>
-
-      <!-- 완료 필터 -->
+      <!-- 필터 탭 -->
       <div class="flex gap-1.5">
-        <button @click="statusFilter='all'" class="tab-btn flex-none text-xs" :class="statusFilter==='all'?'tab-on':'tab-off'">전체</button>
-        <button @click="statusFilter='incomplete'" class="tab-btn flex-none text-xs" :class="statusFilter==='incomplete'?'tab-on':'tab-off'">❌ 미완료</button>
-        <button @click="statusFilter='complete'" class="tab-btn flex-none text-xs" :class="statusFilter==='complete'?'tab-on':'tab-off'">✅ 완료</button>
+        <button @click="statusFilter='all'" class="tab-btn flex-none" :class="statusFilter==='all'?'tab-on':'tab-off'">전체 53</button>
+        <button @click="statusFilter='incomplete'" class="tab-btn flex-none" :class="statusFilter==='incomplete'?'tab-on':'tab-off'">❌ 미완료</button>
+        <button @click="statusFilter='complete'" class="tab-btn flex-none" :class="statusFilter==='complete'?'tab-on':'tab-off'">✅ 완료</button>
       </div>
     </div>
 
     <!-- 엔딩 목록 -->
     <div class="flex-1 overflow-y-auto hide-scroll px-4 pb-6">
-      <div class="text-[10px] text-white/30 font-black mb-2">{{ filteredEndings.length }}개 표시 중</div>
+      <div class="text-[10px] text-gray-400 font-black mb-2">{{ filteredEndings.length }}개 표시 중</div>
       <div class="space-y-2">
         <div v-for="ending in filteredEndings" :key="ending.name"
              class="ending-card rounded-2xl p-3.5 cursor-pointer"
@@ -289,7 +268,7 @@
               <div class="text-[10px] text-white/30 truncate">{{ ending.pathShort }}</div>
             </div>
             <!-- 화살표 -->
-            <i class="fas fa-chevron-right text-white/20 text-xs flex-none"></i>
+            <i class="fas fa-chevron-right text-gray-300 text-xs flex-none"></i>
           </div>
         </div>
         <div v-if="filteredEndings.length === 0" class="text-center text-white/30 py-10 text-sm">
@@ -301,14 +280,14 @@
 
   <!-- 엔딩 상세 팝업 -->
   <div v-if="selectedEnding" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end justify-center z-50" @click.self="selectedEnding=null">
-    <div class="bg-[#1a0a2e] sheet w-full max-w-md p-5 shadow-2xl border-t border-amber-400/20 max-h-[80vh] overflow-y-auto hide-scroll">
+    <div class="bg-white sheet w-full max-w-md p-5 shadow-2xl border-t border-gray-100 max-h-[80vh] overflow-y-auto hide-scroll">
       <div class="flex items-start justify-between mb-4">
         <div>
           <div class="text-[10px] font-black mb-1"
                :class="selectedEnding.force === 'juryum' ? 'text-pink-400' : selectedEnding.force === 'jukrim' ? 'text-teal-400' : 'text-amber-400'">
             {{ selectedEnding.forceName }}
           </div>
-          <h3 class="text-xl font-black text-white">{{ selectedEnding.name }}</h3>
+          <h3 class="text-xl font-black text-gray-900">{{ selectedEnding.name }}</h3>
         </div>
         <button @click="selectedEnding=null" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 btn-press flex-none">
           <i class="fas fa-times text-sm"></i>
@@ -316,12 +295,12 @@
       </div>
 
       <!-- 분기 경로 -->
-      <div class="bg-white/5 rounded-2xl p-4 mb-4 border border-white/10">
-        <div class="text-xs font-black text-white/50 mb-3">📍 분기 경로</div>
+      <div class="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
+        <div class="text-xs font-black text-gray-400 mb-3">📍 분기 경로</div>
         <div class="space-y-2">
           <div v-for="(step, i) in selectedEnding.pathSteps" :key="i" class="path-step py-1">
             <span class="text-sm font-black"
-                  :class="i === selectedEnding.pathSteps.length-1 ? 'text-amber-400' : 'text-white/70'">
+                  :class="i === selectedEnding.pathSteps.length-1 ? 'text-amber-600' : 'text-gray-600'">
               {{ step }}
             </span>
             <span v-if="i === selectedEnding.pathSteps.length-1" class="text-amber-400 ml-1">→ {{ selectedEnding.name }}</span>
@@ -345,10 +324,10 @@
 
   <!-- 게스트 알림 -->
   <div v-if="showGuestAlertMsg" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6" @click="showGuestAlertMsg=false">
-    <div class="bg-[#1a0a2e] rounded-2xl p-6 border border-amber-400/20 w-full max-w-sm text-center">
+    <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-xl w-full max-w-sm text-center">
       <div class="text-3xl mb-3">📝</div>
-      <p class="text-white font-black mb-1">닉네임이 필요해요!</p>
-      <p class="text-white/40 text-sm mb-4">체크 저장은 닉네임으로 시작해야 해요</p>
+      <p class="text-gray-900 font-black mb-1">닉네임이 필요해요!</p>
+      <p class="text-gray-500 text-sm mb-4">체크 저장은 닉네임으로 시작해야 해요</p>
       <button @click="showGuestAlertMsg=false; started=false" class="w-full py-3 bg-amber-500 text-gray-900 rounded-xl font-black text-sm btn-press">닉네임으로 시작하기</button>
       <button @click="showGuestAlertMsg=false" class="w-full py-2 text-white/30 text-xs mt-1 btn-press">그냥 볼게요</button>
     </div>
@@ -356,9 +335,9 @@
 
   <!-- 로그아웃 확인 -->
   <div v-if="showLogoutConfirm" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6" @click.self="showLogoutConfirm=false">
-    <div class="bg-[#1a0a2e] rounded-2xl p-6 border border-white/10 w-full max-w-sm text-center">
-      <p class="text-white font-black mb-1">나가기</p>
-      <p class="text-white/40 text-sm mb-4">체크 기록은 저장돼 있어요. 다음에 같은 닉네임으로 들어오면 돼요!</p>
+    <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-xl w-full max-w-sm text-center">
+      <p class="text-gray-900 font-black mb-1">나가기</p>
+      <p class="text-gray-500 text-sm mb-4">체크 기록은 저장돼 있어요. 다음에 같은 닉네임으로 들어오면 돼요!</p>
       <div class="flex gap-2">
         <button @click="showLogoutConfirm=false" class="flex-1 py-3 bg-white/10 text-white rounded-xl font-black text-sm btn-press">취소</button>
         <button @click="logout" class="flex-1 py-3 bg-amber-500 text-gray-900 rounded-xl font-black text-sm btn-press">나가기</button>
@@ -368,12 +347,12 @@
 
   <!-- 도움말 -->
   <div v-if="showHelp" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6" @click.self="showHelp=false">
-    <div class="bg-[#1a0a2e] rounded-2xl p-6 border border-amber-400/20 w-full max-w-sm">
+    <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-xl w-full max-w-sm">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-base font-black text-white">사용 가이드</h3>
-        <button @click="showHelp=false" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 btn-press"><i class="fas fa-times text-sm"></i></button>
+        <h3 class="text-base font-black text-gray-900">사용 가이드</h3>
+        <button @click="showHelp=false" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 btn-press"><i class="fas fa-times text-sm"></i></button>
       </div>
-      <div class="space-y-3 text-sm text-white/60">
+      <div class="space-y-3 text-sm text-gray-500">
         <div class="flex items-start gap-2"><span class="text-amber-400 flex-none">•</span><p>닉네임 없이도 <b class="text-white">족보(분기경로)</b>는 볼 수 있어요</p></div>
         <div class="flex items-start gap-2"><span class="text-amber-400 flex-none">•</span><p>내가 본 엔딩을 저장하려면 <b class="text-white">닉네임으로 시작</b>하세요</p></div>
         <div class="flex items-start gap-2"><span class="text-amber-400 flex-none">•</span><p>엔딩 카드를 탭하면 <b class="text-white">분기 경로</b>를 볼 수 있어요</p></div>
