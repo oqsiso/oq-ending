@@ -506,7 +506,7 @@ createApp({
         nickname.value = nick;
         await loadProgress(nick);
         started.value = true;
-        localStorage.setItem('oq_ending_nick', nick);
+        localStorage.setItem('oq_ending_nick', nick); // 성공시 저장
       } catch(e) { alert('오류: ' + (e.message||e)); } finally { isLoading.value = false; }
     };
 
@@ -535,8 +535,7 @@ createApp({
     const checkAutoLogin = async () => {
       const saved = localStorage.getItem('oq_ending_nick');
       if (saved) {
-        nicknameInput.value = saved;
-        await startWithNickname();
+        nicknameInput.value = saved; // 입력칸만 채워주고 자동로그인 안 함
       }
     };
 
