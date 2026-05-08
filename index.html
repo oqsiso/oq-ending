@@ -103,10 +103,10 @@
       </div>
       <!-- 캐릭터 탭 (연동 로그인 & 2명 이상) -->
       <div v-if="chars.length > 1" class="flex gap-1.5 overflow-x-auto hide-scroll mb-1.5">
-        <button v-for="(c, i) in chars" :key="c.nickname"
+        <button v-for="(c, i) in chars" :key="c.docId"
                 @click="switchChar(i)"
                 class="tab flex-none" :class="i===activeIdx?'tab-on':'tab-off'">
-          {{ c.nickname }}
+          {{ charLabels[i] }}
         </button>
       </div>
       <div class="flex gap-1.5">
@@ -299,6 +299,11 @@ createApp({
       return id ? (doneMap.value[id] || new Set()) : new Set();
     });
     const doneCount   = computed(() => done.value.size);
+    const charLabels  = computed(() => {
+      const counts = {};
+      chars.value.forEach(c => { counts[c.nickname] = (counts[c.nickname] || 0) + 1; });
+      return chars.value.map(c => counts[c.nickname] > 1 ? `${c.nickname} (${c.server})` : c.nickname);
+    });
     const list        = computed(() => {
       if (tab.value === 'yes') return ENDINGS.filter(e => done.value.has(e.name));
       if (tab.value === 'no')  return ENDINGS.filter(e => !done.value.has(e.name));
@@ -308,7 +313,19 @@ createApp({
     // ── Firebase 읽기/쓰기 ──
     const load = async (docId, nickname) => {
       try {
-        const d = await db.collection('endingProgress').doc(docId).get();
+        let d = await db.collection('endingProgress').doc(docId).get();
+        // 기존 nick_ 형식 데이터 마이그레이션
+        if (!d.exists && nickname && docId !== 'nick_' + nickname) {
+          const old = await db.collection('endingProgress').doc('nick_' + nickname).get();
+          if (old.exists) {
+            // 새 키로 복사 후 저장
+            const data = old.data();
+            await db.collection('endingProgress').doc(docId).set({
+              ...data, updatedAt: FieldValue.serverTimestamp()
+            });
+            d = await db.collection('endingProgress').doc(docId).get();
+          }
+        }
         const s = d.exists ? new Set(d.data().completed || []) : new Set();
         doneMap.value = { ...doneMap.value, [docId]: s };
       } catch(e) {}
@@ -422,7 +439,8 @@ createApp({
       chars, activeIdx, activeChar, loggedNick,
       done, doneCount, tab, sel, confirmLogout, list,
       hasLinkedAccount, linkedAccountName,
-      toggle, switchChar, doLinkedLogin, doLogin, doGuest, doLogout
+      toggle, switchChar, doLinkedLogin, doLogin, doGuest, doLogout,
+      charLabels
     };
   }
 }).mount('#app');
