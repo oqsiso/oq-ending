@@ -46,11 +46,29 @@
       <h1 class="text-2xl font-black text-gray-900 mb-1">부생일몽 엔딩 도감</h1>
       <p class="text-sm text-gray-400">총 53개 엔딩을 모두 완성하세요</p>
     </div>
+
+    <!-- 스티커 교환소 연동 로그인 -->
+    <button v-if="hasLinkedAccount" @click="doLinkedLogin" :disabled="loading"
+            class="w-full py-4 bg-blue-800 text-white rounded-2xl font-black text-sm btn flex flex-col items-center gap-0.5 mb-3 disabled:opacity-40">
+      <div v-if="loading" class="loader border-white/20 border-t-white w-4 h-4 border-2 mb-1"></div>
+      <template v-else>
+        <span>🔗 {{ linkedAccountName }} 계정으로 시작</span>
+        <span class="text-[11px] font-normal opacity-70">스티커 교환소 부캐 포함 자동 연동</span>
+      </template>
+    </button>
+
+    <!-- 구분선 -->
+    <div class="flex items-center gap-3 mb-3">
+      <div class="flex-1 h-px bg-gray-200"></div>
+      <span class="text-[10px] text-gray-400 font-black">{{ hasLinkedAccount ? '또는' : '' }}</span>
+      <div class="flex-1 h-px bg-gray-200"></div>
+    </div>
+
     <button @click="doGuest" class="w-full py-3 rounded-2xl border border-blue-200 text-blue-700 text-sm font-black btn mb-3">
       👀 로그인 없이 족보만 보기
     </button>
     <div class="bg-white rounded-2xl border border-blue-100 p-4 shadow-sm">
-      <div class="text-xs font-black text-blue-700 mb-3">📝 내 기록 저장하기</div>
+      <div class="text-xs font-black text-blue-700 mb-3">📝 닉네임으로 기록 저장하기</div>
       <input v-model="nick" type="text" placeholder="닉네임 입력 (게임 닉네임)"
              @keyup.enter="doLogin"
              class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 text-sm font-bold placeholder-gray-300 focus:outline-none focus:border-blue-400 mb-2">
@@ -82,6 +100,14 @@
         </div>
         <button v-if="loggedNick" @click="confirmLogout=true" class="text-[10px] text-gray-400 border border-gray-200 px-2 py-1.5 rounded-lg btn flex-none">나가기</button>
         <button v-else @click="started=false" class="text-[10px] font-black text-blue-700 border border-blue-200 px-2 py-1.5 rounded-lg btn flex-none">📝 기록저장</button>
+      </div>
+      <!-- 캐릭터 탭 (연동 로그인 & 2명 이상) -->
+      <div v-if="chars.length > 1" class="flex gap-1.5 overflow-x-auto hide-scroll mb-1.5">
+        <button v-for="(c, i) in chars" :key="c.nickname"
+                @click="switchChar(i)"
+                class="tab flex-none" :class="i===activeIdx?'tab-on':'tab-off'">
+          {{ c.nickname }}
+        </button>
       </div>
       <div class="flex gap-1.5">
         <button @click="tab='all'" class="tab" :class="tab==='all'?'tab-on':'tab-off'">전체 53</button>
@@ -240,68 +266,163 @@ const ENDINGS = DATA.map(([name,fn,path])=>({
 try {
 createApp({
   setup(){
-    const started=ref(false), nick=ref(''), loggedNick=ref(''), loading=ref(false);
-    const done=ref(new Set()), tab=ref('all'), sel=ref(null), confirmLogout=ref(false);
+    // ── 상태 ──
+    const started = ref(false);
+    const nick    = ref('');
+    const loading = ref(false);
+    const chars   = ref([]);      // [{docId, nickname, server}]
+    const activeIdx = ref(0);
+    const doneMap = ref({});      // { nickname: Set }
+    const tab     = ref('all');
+    const sel     = ref(null);
+    const confirmLogout = ref(false);
 
-    const doneCount=computed(()=>done.value.size);
-    const list=computed(()=>{
-      if(tab.value==='yes') return ENDINGS.filter(e=>done.value.has(e.name));
-      if(tab.value==='no') return ENDINGS.filter(e=>!done.value.has(e.name));
+    // 스티커 교환소 로그인 정보 감지
+    const hasLinkedAccount  = ref(false);
+    const linkedAccountName = ref('');
+    try {
+      const raw = localStorage.getItem('oq_user_v4');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && u.nickname) {
+          hasLinkedAccount.value  = true;
+          linkedAccountName.value = u.nickname;
+        }
+      }
+    } catch {}
+
+    // ── Computed ──
+    const activeChar  = computed(() => chars.value[activeIdx.value] || null);
+    const loggedNick  = computed(() => activeChar.value?.nickname || '');
+    const done        = computed(() => {
+      const n = loggedNick.value;
+      return n ? (doneMap.value[n] || new Set()) : new Set();
+    });
+    const doneCount   = computed(() => done.value.size);
+    const list        = computed(() => {
+      if (tab.value === 'yes') return ENDINGS.filter(e => done.value.has(e.name));
+      if (tab.value === 'no')  return ENDINGS.filter(e => !done.value.has(e.name));
       return ENDINGS;
     });
 
-    const load=async n=>{
-      try{
-        const d=await db.collection('endingProgress').doc('nick_'+n).get();
-        if(d.exists) done.value=new Set(d.data().completed||[]);
-      }catch(e){}
+    // ── Firebase 읽기/쓰기 ──
+    const load = async (nickname) => {
+      try {
+        const d = await db.collection('endingProgress').doc('nick_' + nickname).get();
+        const s = d.exists ? new Set(d.data().completed || []) : new Set();
+        doneMap.value = { ...doneMap.value, [nickname]: s };
+      } catch(e) {}
     };
 
-    const save=async()=>{
-      if(!loggedNick.value) return;
-      try{
-        await db.collection('endingProgress').doc('nick_'+loggedNick.value).set({
-          nickname:loggedNick.value,
-          completed:[...done.value],
-          updatedAt:FieldValue.serverTimestamp()
+    const save = async () => {
+      const n = loggedNick.value;
+      if (!n) return;
+      try {
+        await db.collection('endingProgress').doc('nick_' + n).set({
+          nickname: n,
+          completed: [...(doneMap.value[n] || new Set())],
+          updatedAt: FieldValue.serverTimestamp()
         });
-      }catch(e){}
+      } catch(e) {}
     };
 
-    const toggle=async name=>{
-      const s=new Set(done.value);
-      if(s.has(name)) s.delete(name); else s.add(name);
-      done.value=s; await save();
+    const toggle = async (name) => {
+      const n = loggedNick.value;
+      if (!n) return;
+      const s = new Set(doneMap.value[n] || []);
+      if (s.has(name)) s.delete(name); else s.add(name);
+      doneMap.value = { ...doneMap.value, [n]: s };
+      await save();
     };
 
-    const doLogin=async()=>{
-      const n=nick.value.trim();
-      if(!n||loading.value) return;
-      loading.value=true;
-      try{
-        loggedNick.value=n;
+    // 캐릭터 탭 전환 (미로드 시 Firebase에서 가져옴)
+    const switchChar = async (idx) => {
+      activeIdx.value = idx;
+      const c = chars.value[idx];
+      if (c && doneMap.value[c.nickname] === undefined) {
+        await load(c.nickname);
+      }
+    };
+
+    // ── 로그인 방법 1: 스티커 교환소 연동 ──
+    const doLinkedLogin = async () => {
+      if (loading.value) return;
+      loading.value = true;
+      try {
+        const raw = localStorage.getItem('oq_user_v4');
+        if (!raw) { alert('스티커 교환소에 먼저 로그인해주세요!'); return; }
+        const userData = JSON.parse(raw);
+        const myDocId  = `S${userData.server}_${userData.nickname}`;
+
+        // linkedChars 컬렉션에서 부캐 목록 가져오기
+        const doc = await db.collection('linkedChars').doc(myDocId).get();
+        let charList = [];
+        if (doc.exists) {
+          charList = (doc.data().chars || []).map(c => ({
+            docId: c.docId, nickname: c.nickname, server: c.server
+          }));
+        }
+        if (!charList.length) {
+          charList = [{ docId: myDocId, nickname: userData.nickname, server: userData.server }];
+        }
+
+        chars.value    = charList;
+        activeIdx.value = 0;
+        // 전체 캐릭터 진행도 병렬 로드
+        await Promise.all(charList.map(c => load(c.nickname)));
+        started.value = true;
+      } catch(e) {
+        alert('오류: ' + (e.message || e));
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    // ── 로그인 방법 2: 닉네임만 ──
+    const doLogin = async () => {
+      const n = nick.value.trim();
+      if (!n || loading.value) return;
+      loading.value = true;
+      try {
+        chars.value     = [{ docId: 'nick_' + n, nickname: n, server: null }];
+        activeIdx.value = 0;
         await load(n);
-        started.value=true;
-        localStorage.setItem('oq_ending_nick',n);
-      }catch(e){ alert('오류: '+(e.message||e)); }
-      finally{ loading.value=false; }
+        started.value   = true;
+        localStorage.setItem('oq_ending_nick', n);
+      } catch(e) {
+        alert('오류: ' + (e.message || e));
+      } finally {
+        loading.value = false;
+      }
     };
 
-    const doGuest=()=>{ loggedNick.value=''; started.value=true; };
+    // ── 로그인 없이 보기 ──
+    const doGuest = () => {
+      chars.value     = [];
+      activeIdx.value = 0;
+      started.value   = true;
+    };
 
-    const doLogout=()=>{
-      started.value=false; loggedNick.value='';
-      done.value=new Set(); confirmLogout.value=false;
+    // ── 나가기 ──
+    const doLogout = () => {
+      started.value   = false;
+      chars.value     = [];
+      activeIdx.value = 0;
+      doneMap.value   = {};
+      confirmLogout.value = false;
       localStorage.removeItem('oq_ending_nick');
     };
 
-    // 저장된 닉네임 입력칸에 채우기 (자동로그인 없음)
-    const saved=localStorage.getItem('oq_ending_nick');
-    if(saved) nick.value=saved;
+    // 이전 닉네임 자동완성
+    const savedNick = localStorage.getItem('oq_ending_nick');
+    if (savedNick) nick.value = savedNick;
 
     return {
-      started,nick,loggedNick,loading,done,tab,sel,confirmLogout,
-      doneCount,list,toggle,doLogin,doGuest,doLogout
+      started, nick, loading,
+      chars, activeIdx, activeChar, loggedNick,
+      done, doneCount, tab, sel, confirmLogout, list,
+      hasLinkedAccount, linkedAccountName,
+      toggle, switchChar, doLinkedLogin, doLogin, doGuest, doLogout
     };
   }
 }).mount('#app');
