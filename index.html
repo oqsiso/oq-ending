@@ -273,7 +273,7 @@ createApp({
     const chars   = ref([]);      // [{docId, nickname, server}]
     const activeIdx = ref(0);
     const doneMap = ref({});      // { docId: Set }  ← docId 기준으로 분리
-    const tab     = ref('all');
+    const tab     = ref('no');
     const sel     = ref(null);
     const confirmLogout = ref(false);
 
@@ -417,6 +417,7 @@ createApp({
     const doGuest = () => {
       chars.value     = [];
       activeIdx.value = 0;
+      tab.value       = 'all';
       started.value   = true;
     };
 
